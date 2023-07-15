@@ -1,9 +1,9 @@
+import type { TriggerProps } from '@rc-component/trigger';
 import dayjs from 'dayjs';
 import 'dayjs/locale/mk'; // to test local in 'prop locale should works' test case
 import customParseFormat from 'dayjs/plugin/customParseFormat';
 import MockDate from 'mockdate';
 import dayJsGenerateConfig from 'rc-picker/lib/generate/dayjs';
-import type { TriggerProps } from 'rc-trigger';
 import React from 'react';
 import DatePicker from '..';
 import focusTest from '../../../tests/shared/focusTest';
@@ -21,7 +21,7 @@ jest.mock('@rc-component/trigger', () => {
   const h: typeof React = jest.requireActual('react');
 
   return {
-    default: h.forwardRef<unknown, TriggerProps>((props, ref) => {
+    default: h.forwardRef<HTMLElement, TriggerProps>((props, ref) => {
       triggerProps = props;
       return h.createElement(Trigger, { ref, ...props });
     }),
@@ -294,5 +294,22 @@ describe('DatePicker', () => {
     const MyDatePicker = DatePicker.generatePicker(dayJsGenerateConfig);
     const { container } = render(<MyDatePicker />);
     expect(container.firstChild).toMatchSnapshot();
+  });
+
+  it('kk:mm format', () => {
+    const { container } = render(
+      <DatePicker defaultValue={dayjs()} format="kk:mm" showTime open />,
+    );
+    expect(container.querySelectorAll('.ant-picker-time-panel-column').length).toBe(2);
+    expect(
+      container
+        .querySelectorAll('.ant-picker-time-panel-column')?.[0]
+        .querySelectorAll('.ant-picker-time-panel-cell').length,
+    ).toBe(24);
+    expect(
+      container
+        .querySelectorAll('.ant-picker-time-panel-column')?.[1]
+        .querySelectorAll('.ant-picker-time-panel-cell').length,
+    ).toBe(60);
   });
 });

@@ -54,7 +54,7 @@ const InternalAvatar: React.ForwardRefRenderFunction<HTMLSpanElement, AvatarProp
   const avatarChildrenRef = React.useRef<HTMLSpanElement>(null);
   const avatarNodeMergeRef = composeRef<HTMLSpanElement>(ref, avatarNodeRef);
 
-  const { getPrefixCls } = React.useContext(ConfigContext);
+  const { getPrefixCls, avatar } = React.useContext(ConfigContext);
 
   const setScaleParam = () => {
     if (!avatarChildrenRef.current || !avatarNodeRef.current) {
@@ -80,13 +80,11 @@ const InternalAvatar: React.ForwardRefRenderFunction<HTMLSpanElement, AvatarProp
     setScale(1);
   }, [props.src]);
 
-  React.useEffect(() => {
-    setScaleParam();
-  }, [props.gap]);
+  React.useEffect(setScaleParam, [props.gap]);
 
   const handleImgLoadError = () => {
     const { onError } = props;
-    const errorFlag = onError ? onError() : undefined;
+    const errorFlag = onError?.();
     if (errorFlag !== false) {
       setIsImgExist(false);
     }
@@ -151,6 +149,7 @@ const InternalAvatar: React.ForwardRefRenderFunction<HTMLSpanElement, AvatarProp
   const classString = classNames(
     prefixCls,
     sizeCls,
+    avatar?.className,
     {
       [`${prefixCls}-${shape}`]: !!shape,
       [`${prefixCls}-image`]: hasImageElement || (src && isImgExist),
@@ -229,7 +228,7 @@ const InternalAvatar: React.ForwardRefRenderFunction<HTMLSpanElement, AvatarProp
   return wrapSSR(
     <span
       {...others}
-      style={{ ...sizeStyle, ...responsiveSizeStyle, ...others.style }}
+      style={{ ...sizeStyle, ...responsiveSizeStyle, ...avatar?.style, ...others.style }}
       className={classString}
       ref={avatarNodeMergeRef}
     >

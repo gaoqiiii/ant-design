@@ -12,11 +12,12 @@ import { SizeContextProvider } from '../config-provider/SizeContext';
 import useSize from '../config-provider/hooks/useSize';
 import type { ColProps } from '../grid/col';
 import type { FormContextProps } from './context';
-import { FormContext } from './context';
+import { FormContext, FormProvider } from './context';
 import useForm, { type FormInstance } from './hooks/useForm';
 import useFormWarning from './hooks/useFormWarning';
 import type { FormLabelAlign } from './interface';
 import useStyle from './style';
+import ValidateMessagesContext from './validateMessagesContext';
 
 export type RequiredMark = boolean | 'optional';
 export type FormLayout = 'horizontal' | 'inline' | 'vertical';
@@ -62,10 +63,13 @@ const InternalForm: React.ForwardRefRenderFunction<FormInstance, FormProps> = (p
     requiredMark,
     onFinishFailed,
     name,
+    style,
     ...restFormProps
   } = props;
 
   const mergedSize = useSize(size);
+
+  const contextValidateMessages = React.useContext(ValidateMessagesContext);
 
   if (process.env.NODE_ENV !== 'production') {
     // eslint-disable-next-line react-hooks/rules-of-hooks
@@ -97,13 +101,14 @@ const InternalForm: React.ForwardRefRenderFunction<FormInstance, FormProps> = (p
 
   const formClassName = classNames(
     prefixCls,
+    `${prefixCls}-${layout}`,
     {
-      [`${prefixCls}-${layout}`]: true,
       [`${prefixCls}-hide-required-mark`]: mergedRequiredMark === false,
       [`${prefixCls}-rtl`]: direction === 'rtl',
       [`${prefixCls}-${mergedSize}`]: mergedSize,
     },
     hashId,
+    contextForm?.className,
     className,
     rootClassName,
   );
@@ -158,16 +163,24 @@ const InternalForm: React.ForwardRefRenderFunction<FormInstance, FormProps> = (p
   return wrapSSR(
     <DisabledContextProvider disabled={disabled}>
       <SizeContextProvider size={mergedSize}>
-        <FormContext.Provider value={formContextValue}>
-          <FieldForm
-            id={name}
-            {...restFormProps}
-            name={name}
-            onFinishFailed={onInternalFinishFailed}
-            form={wrapForm}
-            className={formClassName}
-          />
-        </FormContext.Provider>
+        <FormProvider
+          {...{
+            // This is not list in API, we pass with spread
+            validateMessages: contextValidateMessages,
+          }}
+        >
+          <FormContext.Provider value={formContextValue}>
+            <FieldForm
+              id={name}
+              {...restFormProps}
+              name={name}
+              onFinishFailed={onInternalFinishFailed}
+              form={wrapForm}
+              style={{ ...contextForm?.style, ...style }}
+              className={formClassName}
+            />
+          </FormContext.Provider>
+        </FormProvider>
       </SizeContextProvider>
     </DisabledContextProvider>,
   );
@@ -177,6 +190,6 @@ const Form = React.forwardRef<FormInstance, FormProps>(InternalForm) as <Values 
   props: React.PropsWithChildren<FormProps<Values>> & { ref?: React.Ref<FormInstance<Values>> },
 ) => React.ReactElement;
 
-export { useForm, List, type FormInstance, useWatch };
+export { List, useForm, useWatch, type FormInstance };
 
 export default Form;

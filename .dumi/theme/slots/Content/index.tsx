@@ -7,6 +7,7 @@ import DayJS from 'dayjs';
 import { FormattedMessage, useIntl, useRouteMeta, useTabMeta } from 'dumi';
 import type { ReactNode } from 'react';
 import React, { useContext, useLayoutEffect, useMemo, useState } from 'react';
+import useLayoutState from '../../../hooks/useLayoutState';
 import useLocation from '../../../hooks/useLocation';
 import useSiteToken from '../../../hooks/useSiteToken';
 import EditButton from '../../common/EditButton';
@@ -15,7 +16,7 @@ import type { DemoContextProps } from '../DemoContext';
 import DemoContext from '../DemoContext';
 import Footer from '../Footer';
 import SiteContext from '../SiteContext';
-import useLayoutState from '../../../hooks/useLayoutState';
+import ColumnCard from './ColumnCard';
 
 const useStyle = () => {
   const { token } = useSiteToken();
@@ -27,6 +28,7 @@ const useStyle = () => {
       display: flex;
       flex-wrap: wrap;
       margin-top: 120px !important;
+      clear: both;
       a,
       ${antCls}-avatar + ${antCls}-avatar {
         transition: all ${token.motionDurationSlow};
@@ -49,10 +51,11 @@ const useStyle = () => {
     tocWrapper: css`
       position: absolute;
       top: 8px;
-      right: 0;
+      inset-inline-end: 0;
       width: 160px;
       margin: 12px 0;
-      padding: 8px 8px 8px 4px;
+      padding: 8px 0;
+      padding-inline: 4px 8px;
       backdrop-filter: blur(8px);
       border-radius: ${token.borderRadius}px;
       box-sizing: border-box;
@@ -72,11 +75,6 @@ const useStyle = () => {
         margin: 0 auto;
         overflow: auto;
         padding-inline: 4px;
-      }
-
-      &.rtl {
-        right: auto;
-        left: 20px;
       }
 
       @media only screen and (max-width: ${token.screenLG}px) {
@@ -106,7 +104,7 @@ type AnchorItem = {
   children?: AnchorItem[];
 };
 
-const AvatarPlaceholder = ({ num = 3 }: { num?: number }) => (
+const AvatarPlaceholder: React.FC<{ num?: number }> = ({ num = 3 }) => (
   <>
     {Array.from({ length: num }).map((_, i) => (
       <Skeleton.Avatar size="small" active key={i} style={{ marginLeft: i === 0 ? 0 : -8 }} />
@@ -208,7 +206,7 @@ const Content: React.FC<{ children: ReactNode }> = ({ children }) => {
     <DemoContext.Provider value={contextValue}>
       <Col xxl={20} xl={19} lg={18} md={18} sm={24} xs={24}>
         <Affix>
-          <section css={styles.tocWrapper} className={classNames({ rtl: isRTL })}>
+          <section css={styles.tocWrapper}>
             <Anchor
               css={styles.toc}
               affix={false}
@@ -275,6 +273,15 @@ const Content: React.FC<{ children: ReactNode }> = ({ children }) => {
           ) : null}
           {!meta.frontmatter.__autoDescription && meta.frontmatter.description}
           {children}
+          {(meta.frontmatter?.zhihu_url ||
+            meta.frontmatter?.yuque_url ||
+            meta.frontmatter?.juejin_url) && (
+            <ColumnCard
+              zhihuLink={meta.frontmatter.zhihu_url}
+              yuqueLink={meta.frontmatter.yuque_url}
+              juejinLink={meta.frontmatter.juejin_url}
+            />
+          )}
           {meta.frontmatter.filename && (
             <ContributorsList
               repo="ant-design"
@@ -282,10 +289,14 @@ const Content: React.FC<{ children: ReactNode }> = ({ children }) => {
               css={styles.contributorsList}
               cache
               fileName={meta.frontmatter.filename}
-              renderItem={(item, loading) =>
-                loading || !item ? (
-                  <AvatarPlaceholder />
-                ) : (
+              renderItem={(item, loading) => {
+                if (!item || loading) {
+                  return <AvatarPlaceholder />;
+                }
+                if (item.username?.includes('github-actions')) {
+                  return null;
+                }
+                return (
                   <Tooltip
                     mouseEnterDelay={0.3}
                     title={`${formatMessage({ id: 'app.content.contributors' })}: ${item.username}`}
@@ -301,12 +312,12 @@ const Content: React.FC<{ children: ReactNode }> = ({ children }) => {
                       </Avatar>
                     </a>
                   </Tooltip>
-                )
-              }
+                );
+              }}
             />
           )}
         </article>
-        <PrevAndNext />
+        <PrevAndNext rtl={isRTL} />
         <Footer />
       </Col>
     </DemoContext.Provider>

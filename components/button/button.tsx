@@ -18,12 +18,12 @@ import DisabledContext from '../config-provider/DisabledContext';
 import type { SizeType } from '../config-provider/SizeContext';
 import useSize from '../config-provider/hooks/useSize';
 import { useCompactItemContext } from '../space/Compact';
+import IconWrapper from './IconWrapper';
 import LoadingIcon from './LoadingIcon';
 import Group, { GroupSizeContext } from './button-group';
 import type { ButtonHTMLType, ButtonShape, ButtonType } from './buttonHelpers';
 import { isTwoCNChar, isUnBorderedButtonType, spaceChildren } from './buttonHelpers';
 import useStyle from './style';
-import IconWrapper from './IconWrapper';
 
 export type LegacyButtonType = ButtonType | 'danger';
 
@@ -55,7 +55,7 @@ export interface BaseButtonProps {
 
 export type AnchorButtonProps = {
   href: string;
-  target?: string;
+  target?: React.HTMLAttributeAnchorTarget;
   onClick?: React.MouseEventHandler<HTMLAnchorElement>;
 } & BaseButtonProps &
   Omit<React.AnchorHTMLAttributes<HTMLAnchorElement | HTMLButtonElement>, 'type' | 'onClick'>;
@@ -75,8 +75,6 @@ type CompoundedComponent = React.ForwardRefExoticComponent<
   /** @internal */
   __ANT_BUTTON: boolean;
 };
-
-type Loading = number | boolean;
 
 type LoadingConfigType = {
   loading: boolean;
@@ -121,10 +119,11 @@ const InternalButton: React.ForwardRefRenderFunction<
     // React does not recognize the `htmlType` prop on a DOM element. Here we pick it out of `rest`.
     htmlType = 'button',
     classNames: customClassNames,
+    style: customStyle = {},
     ...rest
   } = props;
 
-  const { getPrefixCls, autoInsertSpaceInButton, direction } = useContext(ConfigContext);
+  const { getPrefixCls, autoInsertSpaceInButton, direction, button } = useContext(ConfigContext);
   const prefixCls = getPrefixCls('btn', customizePrefixCls);
 
   const [wrapSSR, hashId] = useStyle(prefixCls);
@@ -136,7 +135,7 @@ const InternalButton: React.ForwardRefRenderFunction<
 
   const loadingOrDelay = useMemo<LoadingConfigType>(() => getLoadingConfig(loading), [loading]);
 
-  const [innerLoading, setLoading] = useState<Loading>(loadingOrDelay.loading);
+  const [innerLoading, setLoading] = useState<boolean>(loadingOrDelay.loading);
 
   const [hasTwoCNChar, setHasTwoCNChar] = useState<boolean>(false);
 
@@ -209,15 +208,13 @@ const InternalButton: React.ForwardRefRenderFunction<
 
   const sizeClassNameMap = { large: 'lg', small: 'sm', middle: undefined };
 
-  const sizeFullname = useSize((ctxSize) => compactSize ?? groupSize ?? customizeSize ?? ctxSize);
+  const sizeFullName = useSize((ctxSize) => customizeSize ?? compactSize ?? groupSize ?? ctxSize);
 
-  const sizeCls = sizeFullname ? sizeClassNameMap[sizeFullname] || '' : '';
+  const sizeCls = sizeFullName ? sizeClassNameMap[sizeFullName] || '' : '';
 
   const iconType = innerLoading ? 'loading' : icon;
 
   const linkButtonRestProps = omit(rest as ButtonProps & { navigate: any }, ['navigate']);
-
-  const hrefAndDisabled = linkButtonRestProps.href !== undefined && mergedDisabled;
 
   const classes = classNames(
     prefixCls,
@@ -233,16 +230,21 @@ const InternalButton: React.ForwardRefRenderFunction<
       [`${prefixCls}-block`]: block,
       [`${prefixCls}-dangerous`]: !!danger,
       [`${prefixCls}-rtl`]: direction === 'rtl',
-      [`${prefixCls}-disabled`]: hrefAndDisabled,
     },
     compactItemClassnames,
     className,
     rootClassName,
+    button?.className,
   );
+
+  const fullStyle = { ...button?.style, ...customStyle };
+
+  const iconClasses = classNames(customClassNames?.icon, button?.classNames?.icon);
+  const iconStyle = { ...(styles?.icon || {}), ...(button?.styles?.icon || {}) };
 
   const iconNode =
     icon && !innerLoading ? (
-      <IconWrapper prefixCls={prefixCls} className={customClassNames?.icon} style={styles?.icon}>
+      <IconWrapper prefixCls={prefixCls} className={iconClasses} style={iconStyle}>
         {icon}
       </IconWrapper>
     ) : (
@@ -256,7 +258,10 @@ const InternalButton: React.ForwardRefRenderFunction<
     return wrapSSR(
       <a
         {...linkButtonRestProps}
-        className={classes}
+        className={classNames(classes, {
+          [`${prefixCls}-disabled`]: mergedDisabled,
+        })}
+        style={fullStyle}
         onClick={handleClick}
         ref={buttonRef as React.Ref<HTMLAnchorElement>}
       >
@@ -271,6 +276,7 @@ const InternalButton: React.ForwardRefRenderFunction<
       {...(rest as NativeButtonProps)}
       type={htmlType}
       className={classes}
+      style={fullStyle}
       onClick={handleClick}
       disabled={mergedDisabled}
       ref={buttonRef as React.Ref<HTMLButtonElement>}

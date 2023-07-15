@@ -1,13 +1,14 @@
-import type { ReactElement } from 'react';
-import React, { useMemo } from 'react';
+import { LeftOutlined, RightOutlined } from '@ant-design/icons';
+import { css } from '@emotion/react';
 import type { MenuProps } from 'antd';
 import type { MenuItemType } from 'antd/es/menu/hooks/useItems';
-import { LeftOutlined, RightOutlined } from '@ant-design/icons';
-import { createStyles, css } from 'antd-style';
-import classNames from 'classnames';
+import type { ReactElement } from 'react';
+import React, { useMemo } from 'react';
 import useMenu from '../../hooks/useMenu';
+import useSiteToken from '../../hooks/useSiteToken';
 
-const useStyle = createStyles(({ token }) => {
+const useStyle = () => {
+  const { token } = useSiteToken();
   const { colorSplit, iconCls, fontSizeIcon } = token;
 
   return {
@@ -27,6 +28,7 @@ const useStyle = createStyles(({ token }) => {
       text-decoration: none;
 
       ${iconCls} {
+        color: #999;
         font-size: ${fontSizeIcon}px;
         transition: all 0.3s;
       }
@@ -37,6 +39,9 @@ const useStyle = createStyles(({ token }) => {
     `,
     prevNav: css`
       text-align: start;
+      display: flex;
+      justify-content: flex-start;
+      align-items: center;
 
       .footer-nav-icon-after {
         display: none;
@@ -44,19 +49,22 @@ const useStyle = createStyles(({ token }) => {
 
       .footer-nav-icon-before {
         position: relative;
-        margin-inline-end: 1em;
-        vertical-align: middle;
         line-height: 0;
-        right: 0;
-        transition: right 0.3s;
+        vertical-align: middle;
+        transition: inset-inline-end 0.3s;
+        margin-inline-end: 1em;
+        inset-inline-end: 0;
       }
 
       &:hover .footer-nav-icon-before {
-        right: 0.2em;
+        inset-inline-end: 0.2em;
       }
     `,
     nextNav: css`
       text-align: end;
+      display: flex;
+      justify-content: flex-end;
+      align-items: center;
 
       .footer-nav-icon-before {
         display: none;
@@ -64,20 +72,20 @@ const useStyle = createStyles(({ token }) => {
 
       .footer-nav-icon-after {
         position: relative;
-        margin-inline-start: 1em;
         margin-bottom: 1px;
-        vertical-align: middle;
         line-height: 0;
-        left: 0;
-        transition: left 0.3s;
+        vertical-align: middle;
+        transition: inset-inline-start 0.3s;
+        margin-inline-start: 1em;
+        inset-inline-start: 0;
       }
 
       &:hover .footer-nav-icon-after {
-        left: 0.2em;
+        inset-inline-start: 0.2em;
       }
     `,
   };
-});
+};
 
 const flattenMenu = (menuItems: MenuProps['items']): MenuProps['items'] | null => {
   if (Array.isArray(menuItems)) {
@@ -94,13 +102,15 @@ const flattenMenu = (menuItems: MenuProps['items']): MenuProps['items'] | null =
   return null;
 };
 
-const PrevAndNext: React.FC = () => {
-  const { styles } = useStyle();
+const PrevAndNext: React.FC<{ rtl?: boolean }> = ({ rtl }) => {
+  const styles = useStyle();
+  const beforeProps = { className: 'footer-nav-icon-before' };
+  const afterProps = { className: 'footer-nav-icon-after' };
 
-  const [menuItems, selectedKey] = useMenu({
-    before: <LeftOutlined className="footer-nav-icon-before" />,
-    after: <RightOutlined className="footer-nav-icon-after" />,
-  });
+  const before = rtl ? <RightOutlined {...beforeProps} /> : <LeftOutlined {...beforeProps} />;
+  const after = rtl ? <LeftOutlined {...afterProps} /> : <RightOutlined {...afterProps} />;
+
+  const [menuItems, selectedKey] = useMenu({ before, after });
 
   const [prev, next] = useMemo(() => {
     const flatMenu = flattenMenu(menuItems);
@@ -120,14 +130,14 @@ const PrevAndNext: React.FC = () => {
   }, [menuItems, selectedKey]);
 
   return (
-    <section className={styles.prevNextNav}>
+    <section css={styles.prevNextNav}>
       {prev &&
         React.cloneElement(prev.label as ReactElement, {
-          className: classNames(styles.pageNav, styles.prevNav),
+          css: [styles.pageNav, styles.prevNav],
         })}
       {next &&
         React.cloneElement(next.label as ReactElement, {
-          className: classNames(styles.pageNav, styles.nextNav),
+          css: [styles.pageNav, styles.nextNav],
         })}
     </section>
   );

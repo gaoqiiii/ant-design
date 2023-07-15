@@ -37,6 +37,7 @@ demo:
 <code src="./demo/selectable.tsx">菜单可选选择</code>
 <code src="./demo/menu-full.tsx" debug>Menu 完整样式</code>
 <code src="./demo/render-panel.tsx" debug>\_InternalPanelDoNotUseOrYouWillBeFired</code>
+<code src="./demo/icon-debug.tsx" debug>Icon debug</code>
 
 ## API
 
@@ -80,3 +81,9 @@ demo:
 ## Design Token
 
 <ComponentTokenTable component="Dropdown"></ComponentTokenTable>
+
+## FAQ
+
+### Dropdown 在水平方向超出屏幕时会被挤压该怎么办？
+
+你可以通过 `width: max-content` 来解决这个问题，参考 [#43025](https://github.com/ant-design/ant-design/issues/43025#issuecomment-1594394135)。

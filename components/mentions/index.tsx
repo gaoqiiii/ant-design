@@ -64,7 +64,10 @@ type CompoundedComponent = React.ForwardRefExoticComponent<
 };
 
 const InternalMentions: React.ForwardRefRenderFunction<MentionsRef, MentionProps> = (
-  {
+  props,
+  ref,
+) => {
+  const {
     prefixCls: customizePrefixCls,
     className,
     rootClassName,
@@ -76,10 +79,9 @@ const InternalMentions: React.ForwardRefRenderFunction<MentionsRef, MentionProps
     options,
     status: customStatus,
     popupClassName,
+    style,
     ...restProps
-  },
-  ref,
-) => {
+  } = props;
   const [focused, setFocused] = React.useState(false);
   const innerRef = React.useRef<MentionsRef>(null);
   const mergedRef = composeRef(ref, innerRef);
@@ -93,7 +95,12 @@ const InternalMentions: React.ForwardRefRenderFunction<MentionsRef, MentionProps
     );
   }
 
-  const { getPrefixCls, renderEmpty, direction } = React.useContext(ConfigContext);
+  const {
+    getPrefixCls,
+    renderEmpty,
+    direction,
+    mentions: contextMentions,
+  } = React.useContext(ConfigContext);
   const {
     status: contextStatus,
     hasFeedback,
@@ -158,6 +165,7 @@ const InternalMentions: React.ForwardRefRenderFunction<MentionsRef, MentionProps
       [`${prefixCls}-rtl`]: direction === 'rtl',
     },
     getStatusClassNames(prefixCls, mergedStatus),
+    contextMentions?.className,
     !hasFeedback && className,
     rootClassName,
     hashId,
@@ -170,6 +178,7 @@ const InternalMentions: React.ForwardRefRenderFunction<MentionsRef, MentionProps
       className={mergedClassName}
       disabled={disabled}
       direction={direction}
+      style={{ ...contextMentions?.style, ...style }}
       {...restProps}
       filterOption={mentionsfilterOption}
       onFocus={onFocus}

@@ -9,16 +9,32 @@ import {
   genStatusStyle,
   initInputToken,
 } from '../../input/style';
-import type { FullToken, GenerateStyle } from '../../theme/internal';
-import { genComponentStyleHook } from '../../theme/internal';
 import { resetComponent, resetIcon } from '../../style';
 import { genCompactItemStyle } from '../../style/compact-item';
+import type { FullToken, GenerateStyle } from '../../theme/internal';
+import { genComponentStyleHook } from '../../theme/internal';
 
 export interface ComponentToken {
+  /**
+   * @desc 输入框宽度
+   * @descEN Width of input
+   */
   controlWidth: number;
+  /**
+   * @desc 操作按钮宽度
+   * @descEN Width of control button
+   */
   handleWidth: number;
+  /**
+   * @desc 操作按钮图标大小
+   * @descEN Icon size of control button
+   */
   handleFontSize: number;
-  /** Default `auto`. Set `true` will always show the handle */
+  /**
+   * Default `auto`. Set `true` will always show the handle
+   * @desc 操作按钮可见性
+   * @descEN Handle visible
+   */
   handleVisible: 'auto' | true;
 }
 
@@ -99,13 +115,6 @@ const genInputNumberStyles: GenerateStyle<InputNumberToken> = (token: InputNumbe
           ...genActiveStyle(token),
         },
 
-        '&-disabled': {
-          ...genDisabledStyle(token),
-          [`${componentCls}-input`]: {
-            cursor: 'not-allowed',
-          },
-        },
-
         // ===================== Out Of Range =====================
         '&-out-of-range': {
           [`${componentCls}-input-wrap`]: {
@@ -140,7 +149,15 @@ const genInputNumberStyles: GenerateStyle<InputNumberToken> = (token: InputNumbe
                 borderRadius: borderRadiusSM,
               },
             },
+
+            [`${componentCls}-wrapper-disabled > ${componentCls}-group-addon`]: {
+              ...genDisabledStyle(token),
+            },
           },
+        },
+
+        [`&-disabled ${componentCls}-input`]: {
+          cursor: 'not-allowed',
         },
 
         [componentCls]: {
@@ -157,7 +174,6 @@ const genInputNumberStyles: GenerateStyle<InputNumberToken> = (token: InputNumbe
             transition: `all ${motionDurationMid} linear`,
             appearance: 'textfield',
             fontSize: 'inherit',
-            verticalAlign: 'top',
             ...genPlaceholderStyle(token.colorTextPlaceholder),
 
             '&[type="number"]::-webkit-inner-spin-button, &[type="number"]::-webkit-outer-spin-button':
@@ -339,10 +355,8 @@ const genAffixWrapperStyles: GenerateStyle<InputNumberToken> = (token: InputNumb
         zIndex: 1,
       },
 
-      '&-disabled': {
-        [`${componentCls}[disabled]`]: {
-          background: 'transparent',
-        },
+      [`&-disabled > ${componentCls}-disabled`]: {
+        background: 'transparent',
       },
 
       [`> div${componentCls}`]: {
@@ -360,6 +374,7 @@ const genAffixWrapperStyles: GenerateStyle<InputNumberToken> = (token: InputNumb
       },
 
       '&::before': {
+        display: 'inline-block',
         width: 0,
         visibility: 'hidden',
         content: '"\\a0"',

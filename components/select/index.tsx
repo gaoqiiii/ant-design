@@ -26,7 +26,7 @@ import getIcons from './utils/iconUtil';
 
 type RawValue = string | number;
 
-export type { OptionProps, BaseSelectRef as RefSelectProps, BaseOptionType, DefaultOptionType };
+export type { BaseOptionType, DefaultOptionType, OptionProps, BaseSelectRef as RefSelectProps };
 
 export interface LabeledValue {
   key?: string;
@@ -43,7 +43,7 @@ export interface InternalSelectProps<
   suffixIcon?: React.ReactNode;
   size?: SizeType;
   disabled?: boolean;
-  mode?: 'multiple' | 'tags' | 'SECRET_COMBOBOX_MODE_DO_NOT_USE';
+  mode?: 'multiple' | 'tags' | 'SECRET_COMBOBOX_MODE_DO_NOT_USE' | 'combobox';
   bordered?: boolean;
 }
 
@@ -68,7 +68,10 @@ export interface SelectProps<
 
 const SECRET_COMBOBOX_MODE_DO_NOT_USE = 'SECRET_COMBOBOX_MODE_DO_NOT_USE';
 
-const InternalSelect = <OptionType extends BaseOptionType | DefaultOptionType = DefaultOptionType>(
+const InternalSelect = <
+  ValueType = any,
+  OptionType extends BaseOptionType | DefaultOptionType = DefaultOptionType,
+>(
   {
     prefixCls: customizePrefixCls,
     bordered = true,
@@ -88,15 +91,17 @@ const InternalSelect = <OptionType extends BaseOptionType | DefaultOptionType = 
     builtinPlacements,
     dropdownMatchSelectWidth,
     popupMatchSelectWidth,
+    direction: propDirection,
+    style,
     ...props
-  }: SelectProps<OptionType>,
+  }: SelectProps<ValueType, OptionType>,
   ref: React.Ref<BaseSelectRef>,
 ) => {
   const {
     getPopupContainer: getContextPopupContainer,
     getPrefixCls,
     renderEmpty,
-    direction,
+    direction: contextDirection,
     virtual,
     popupMatchSelectWidth: contextPopupMatchSelectWidth,
     popupOverflow,
@@ -105,6 +110,8 @@ const InternalSelect = <OptionType extends BaseOptionType | DefaultOptionType = 
 
   const prefixCls = getPrefixCls('select', customizePrefixCls);
   const rootPrefixCls = getPrefixCls();
+  const direction = propDirection ?? contextDirection;
+
   const { compactSize, compactItemClassnames } = useCompactItemContext(prefixCls, direction);
 
   const [wrapSSR, hashId] = useStyle(prefixCls);
@@ -112,7 +119,7 @@ const InternalSelect = <OptionType extends BaseOptionType | DefaultOptionType = 
   const mode = React.useMemo(() => {
     const { mode: m } = props as InternalSelectProps<OptionType>;
 
-    if ((m as any) === 'combobox') {
+    if (m === 'combobox') {
       return undefined;
     }
 
@@ -158,7 +165,10 @@ const InternalSelect = <OptionType extends BaseOptionType | DefaultOptionType = 
     prefixCls,
   });
 
-  const selectProps = omit(props as typeof props & { itemIcon: any }, ['suffixIcon', 'itemIcon']);
+  const selectProps = omit(props as typeof props & { itemIcon: React.ReactNode }, [
+    'suffixIcon',
+    'itemIcon',
+  ]);
 
   const rcSelectRtlDropdownClassName = classNames(
     popupClassName || dropdownClassName,
@@ -169,7 +179,7 @@ const InternalSelect = <OptionType extends BaseOptionType | DefaultOptionType = 
     hashId,
   );
 
-  const mergedSize = useSize((ctx) => compactSize ?? customizeSize ?? ctx);
+  const mergedSize = useSize((ctx) => customizeSize ?? compactSize ?? ctx);
 
   // ===================== Disabled =====================
   const disabled = React.useContext(DisabledContext);
@@ -185,6 +195,7 @@ const InternalSelect = <OptionType extends BaseOptionType | DefaultOptionType = 
     },
     getStatusClassNames(prefixCls, mergedStatus, hasFeedback),
     compactItemClassnames,
+    select?.className,
     className,
     rootClassName,
     hashId,
@@ -217,11 +228,12 @@ const InternalSelect = <OptionType extends BaseOptionType | DefaultOptionType = 
 
   // ====================== Render =======================
   return wrapSSR(
-    <RcSelect<any, any>
+    <RcSelect<ValueType, OptionType>
       ref={ref}
       virtual={virtual}
       showSearch={select?.showSearch}
       {...selectProps}
+      style={{ ...select?.style, ...style }}
       dropdownMatchSelectWidth={mergedPopupMatchSelectWidth}
       builtinPlacements={mergedBuiltinPlacements}
       transitionName={getTransitionName(
